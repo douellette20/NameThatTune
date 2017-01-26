@@ -131,7 +131,7 @@ public class Playing extends AppCompatActivity {
         mediaPlayer.start();
 
         timer.setText("20");
-        c = new CountDownTimer(20000, 1000){
+        c = new CountDownTimer(21000, 1000){
 
             public void onTick(long millisUntilFinished){
                 timer.setText(String.format("%d", millisUntilFinished / 1000));
