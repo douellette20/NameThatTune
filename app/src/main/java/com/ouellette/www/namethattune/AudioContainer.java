@@ -44,7 +44,7 @@ public class AudioContainer {
                 mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST));
     }
 
-    public HashMap<String, Integer> getMapClone(){
-        return (HashMap<String, Integer>)songs.clone();
+    public HashMap<String, Integer> getMap(){
+        return songs;
     }
 }

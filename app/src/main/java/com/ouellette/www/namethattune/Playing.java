@@ -1,8 +1,10 @@
 package com.ouellette.www.namethattune;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.CountDownTimer;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -11,9 +13,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 
 public class Playing extends AppCompatActivity {
@@ -45,7 +45,7 @@ public class Playing extends AppCompatActivity {
         options[2] = (Button)findViewById(R.id.b3);
         options[3] = (Button)findViewById(R.id.b4);
 
-        files = MainActivity.ac.getMapClone();
+        files = MainActivity.ac.getMap();
         setOfSongs = new ArrayList<String>(files.keySet());
 
         currQuestion = 1;
@@ -67,24 +67,37 @@ public class Playing extends AppCompatActivity {
         super.onStop();
     }
 
-    protected void qFinished(boolean correct) {
+    protected void questionFinished(boolean correct, String corrAns) {
         mediaPlayer.stop();
         c.cancel();
+        AlertDialog.Builder alert = new AlertDialog.Builder(Playing.this);
         if(correct){
-            scoreNum+=Integer.parseInt((String)timer.getText());
+            Integer timeRemaining = Integer.parseInt((String)timer.getText());
+            scoreNum+=timeRemaining;
             score.setText("Score: " + scoreNum);
-        }
-        if(currQuestion < 10){
-            currQuestion++;
-            question.setText(String.format("Question %d of 10", currQuestion));
-            newQuestion();
+            alert.setTitle("Correct!");
+            alert.setMessage(String.format("%s was indeed the correct answer! You earned %d points!", corrAns, timeRemaining));
         }
         else{
-            HighScores.addScore(scoreNum);
-            Intent intent = new Intent(Playing.this, MainActivity.class);
-            startActivity(intent);
+            alert.setTitle("Incorrect");
+            alert.setMessage(String.format("Sorry, the correct answer was %s.", corrAns));
         }
-
+        alert.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialog) {
+                if(currQuestion < 10){
+                    currQuestion++;
+                    question.setText(String.format("Question %d of 10", currQuestion));
+                    newQuestion();
+                }
+                else{
+                    HighScores.addScore(scoreNum);
+                    finish();
+                }
+            }
+        });
+        AlertDialog a = alert.create();
+        a.show();
 
     }
 
@@ -92,11 +105,11 @@ public class Playing extends AppCompatActivity {
         //play song
         int songIndex = r.nextInt(setOfSongs.size());
         mediaPlayer = MediaPlayer.create(this, files.get(setOfSongs.get(songIndex)));
-        int buttonIndex = r.nextInt(4);
+        final int buttonIndex = r.nextInt(4);
         options[buttonIndex].setText(setOfSongs.get(songIndex));
         options[buttonIndex].setOnClickListener(new View.OnClickListener(){
                 public void onClick(View view){
-                    qFinished(true);
+                    questionFinished(true, (String)options[buttonIndex].getText());
                 }
         });
         setOfSongs.remove(songIndex);
@@ -107,13 +120,13 @@ public class Playing extends AppCompatActivity {
             tempSongSet.remove(si);
             options[i].setOnClickListener(new View.OnClickListener(){
                 public void onClick(View view){
-                    qFinished(false);
+                    questionFinished(false, (String)options[buttonIndex].getText());
                 }
             });
         }
 
 
-        int lastStart = mediaPlayer.getDuration() - 20000;
+        int lastStart = mediaPlayer.getDuration() - 30000;
         mediaPlayer.seekTo(r.nextInt(lastStart));
         mediaPlayer.start();
 
@@ -126,7 +139,7 @@ public class Playing extends AppCompatActivity {
 
             public void onFinish() {
                 timer.setText("0");
-                qFinished(false);
+                questionFinished(false, (String)options[buttonIndex].getText());
             }
         };
         c.start();
